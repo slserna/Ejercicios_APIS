@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Películas - TMDB</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #141414;
+            color: white;
+        }
+        
+        header {
+            background: linear-gradient(to bottom, #000000, #141414);
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        h1 {
+            color: #E50914;
+            font-size: 2em;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            max-width: 600px;
+        }
+        
+        .search-form {
+            display: flex;
+            gap: 10px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #333;
+            border-radius: 5px;
+            background: #222;
+            color: white;
+            font-size: 16px;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #E50914;
+        }
+        
+        button {
+            padding: 12px 25px;
+            background: #E50914;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #f40612;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: #222;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .tab.active {
+            background: #E50914;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .peliculas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .pelicula-card {
+            background: #222;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .pelicula-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 30px rgba(229, 9, 20, 0.4);
+        }
+        
+        .pelicula-poster {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            background: #333;
+        }
+        
+        .pelicula-info {
+            padding: 15px;
+        }
+        
+        .pelicula-titulo {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 16px;
+            line-height: 1.3;
+            height: 40px;
+            overflow: hidden;
+        }
+        
+        .pelicula-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #999;
+        }
+        
+        .rating {
+            color: #FFC107;
+            font-weight: bold;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 18px;
+            color: #666;
+        }
+        
+        .error {
+            background: #E50914;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .modal.show {
+            display: block;
+        }
+        
+        .modal-content {
+            max-width: 1200px;
+            margin: 50px auto;
+            background: #141414;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 10;
+        }
+        
+        .modal-backdrop {
+            width: 100%;
+            height: 500px;
+            object-fit: cover;
+            opacity: 0.5;
+        }
+        
+        .modal-details {
+            padding: 40px;
+            margin-top: -100px;
+            position: relative;
+        }
+        
+        .modal-header {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .modal-poster {
+            width: 300px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        
+        .modal-info h2 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .modal-tagline {
+            color: #999;
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+        
+        .modal-meta {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .meta-item {
+            background: #222;
+            padding: 8px 15px;
+            border-radius: 5px;
+        }
+        
+        .section {
+            margin-top: 30px;
+        }
+        
+        .section h3 {
+            margin-bottom: 15px;
+            color: #E50914;
+        }
+        
+        .cast-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        
+        .cast-member {
+            text-align: center;
+        }
+        
+        .cast-photo {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+            background: #333;
+        }
+        
+        .cast-name {
+            font-size: 14px;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+        
+        .cast-character {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .trailer-list {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .trailer-item {
+            min-width: 300px;
+            background: #222;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .trailer-item:hover {
+            background: #333;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>🎬 CineDB</h1>
+            <div class="search-box">
+                <div class="search-form">
+                    <input 
+                        type="text" 
+                        id="busqueda" 
+                        placeholder="Buscar películas..."
+                        onkeypress="if(event.key === 'Enter') buscarPeliculas()"
+                    >
+                    <button onclick="buscarPeliculas()">Buscar</button>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="tabs">
+        <button class="tab active" onclick="cambiarTab('populares')">Populares</button>
+        <button class="tab" onclick="cambiarTab('cartelera')">En Cartelera</button>
+        <button class="tab" onclick="cambiarTab('busqueda')">Búsqueda</button>
+    </div>
+    
+    <div class="container">
+        <div id="resultados"></div>
+    </div>
+    
+    <!-- Modal de detalles -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="cerrarModal()">×</button>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        let tabActual = 'populares';
+        
+        window.onload = () => {
+            cargarPopulares();
+        };
+        
+        function cambiarTab(tab) {
+            tabActual = tab;
+            
+            // Actualizar tabs activos
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (tab === 'populares') {
+                cargarPopulares();
+            } else if (tab === 'cartelera') {
+                cargarCartelera();
+            } else {
+                document.getElementById('resultados').innerHTML = 
+                    '<div class="loading">Usa el buscador para encontrar películas</div>';
+            }
+        }
+        
+        async function cargarPopulares() {
+            const resultados = document.getElementById('resultados');
+            resultados.innerHTML = '<div class="loading">🎬 Cargando películas populares...</div>';
+            
+            try {
+                const response = await fetch('/api/peliculas/populares');
+                const data = await response.json();
+                
+                mostrarPeliculas(data.peliculas);
+                
+            } catch (error) {
+                resultados.innerHTML = '<div class="error">❌ Error al cargar películas</div>';
+            }
+        }
+        
+        async function cargarCartelera() {
+            const resultados = document.getElementById('resultados');
+            resultados.innerHTML = '<div class="loading">🎬 Cargando películas en cartelera...</div>';
+            
+            try {
+                const response = await fetch('/api/peliculas/cartelera');
+                const peliculas = await response.json();
+                
+                mostrarPeliculas(peliculas);
+                
+            } catch (error) {
+                resultados.innerHTML = '<div class="error">❌ Error al cargar cartelera</div>';
+            }
+        }
+        
+        async function buscarPeliculas() {
+            const resultados = document.getElementById('resultados');
+            const busqueda = document.getElementById('busqueda').value.trim();
+            
+            if (!busqueda) {
+                alert('Por favor ingresa un término de búsqueda');
+                return;
+            }
+            
+            resultados.innerHTML = '<div class="loading">🔍 Buscando películas...</div>';
+            
+            try {
+                const response = await fetch(`/api/peliculas/buscar?q=${encodeURIComponent(busqueda)}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    resultados.innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                    return;
+                }
+                
+                if (data.peliculas.length === 0) {
+                    resultados.innerHTML = '<div class="loading">No se encontraron películas</div>';
+                    return;
+                }
+                
+                mostrarPeliculas(data.peliculas);
+                
+            } catch (error) {
+                resultados.innerHTML = '<div class="error">❌ Error al buscar películas</div>';
+            }
+        }
+        
+        function mostrarPeliculas(peliculas) {
+            const resultados = document.getElementById('resultados');
+            
+            resultados.innerHTML = `
+                <div class="peliculas-grid">
+                    ${peliculas.map(p => `
+                        <div class="pelicula-card" onclick="verDetalle(${p.id})">
+                            <img 
+                                src="${p.poster || '/static/img/no-poster.png'}" 
+                                alt="${p.titulo}"
+                                class="pelicula-poster"
+                                onerror="this.src='/static/img/no-poster.png'"
+                            >
+                            <div class="pelicula-info">
+                                <div class="pelicula-titulo">${p.titulo}</div>
+                                <div class="pelicula-meta">
+                                    <span class="rating">⭐ ${p.calificacion.toFixed(1)}</span>
+                                    <span>${p.fecha_estreno ? p.fecha_estreno.split('-')[0] : 'N/A'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        async function verDetalle(peliculaId) {
+            const modal = document.getElementById('modal');
+            const modalBody = document.getElementById('modalBody');
+            
+            modalBody.innerHTML = '<div class="loading" style="padding: 100px;">Cargando detalles...</div>';
+            modal.classList.add('show');
+            
+            try {
+                const response = await fetch(`/api/peliculas/${peliculaId}`);
+                const pelicula = await response.json();
+                
+                if (pelicula.error) {
+                    modalBody.innerHTML = `<div class="error">${pelicula.error}</div>`;
+                    return;
+                }
+                
+                modalBody.innerHTML = `
+                    ${pelicula.backdrop ? `<img src="${pelicula.backdrop}" class="modal-backdrop">` : ''}
+                    
+                    <div class="modal-details">
+                        <div class="modal-header">
+                            ${pelicula.poster ? `<img src="${pelicula.poster}" class="modal-poster">` : ''}
+                            
+                            <div class="modal-info">
+                                <h2>${pelicula.titulo}</h2>
+                                ${pelicula.tagline ? `<p class="modal-tagline">"${pelicula.tagline}"</p>` : ''}
+                                
+                                <div class="modal-meta">
+                                    <div class="meta-item">⭐ ${pelicula.calificacion.toFixed(1)}/10</div>
+                                    ${pelicula.duracion ? `<div class="meta-item">🕐 ${pelicula.duracion} min</div>` : ''}
+                                    ${pelicula.fecha_estreno ? `<div class="meta-item">📅 ${pelicula.fecha_estreno}</div>` : ''}
+                                </div>
+                                
+                                ${pelicula.generos.length > 0 ? `
+                                    <div style="margin-top: 15px;">
+                                        ${pelicula.generos.map(g => 
+                                            `<span class="meta-item" style="display: inline-block; margin: 5px;">${g}</span>`
+                                        ).join('')}
+                                    </div>
+                                ` : ''}
+                                
+                                <p style="margin-top: 20px; line-height: 1.6;">${pelicula.descripcion}</p>
+                                
+                                ${pelicula.director ? `<p style="margin-top: 15px;"><strong>Director:</strong> ${pelicula.director}</p>` : ''}
+                            </div>
+                        </div>
+                        
+                        ${pelicula.trailers.length > 0 ? `
+                            <div class="section">
+                                <h3>Tráilers y Videos</h3>
+                                <div class="trailer-list">
+                                    ${pelicula.trailers.map(t => `
+                                        <div class="trailer-item" onclick="window.open('${t.url}', '_blank')">
+                                            <div style="font-weight: bold; margin-bottom: 5px;">▶️ ${t.nombre}</div>
+                                            <div style="color: #999; font-size: 14px;">${t.tipo}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${pelicula.reparto.length > 0 ? `
+                            <div class="section">
+                                <h3>Reparto Principal</h3>
+                                <div class="cast-grid">
+                                    ${pelicula.reparto.map(actor => `
+                                        <div class="cast-member">
+                                            <img 
+                                                src="${actor.foto || '/static/img/no-photo.png'}" 
+                                                class="cast-photo"
+                                                onerror="this.src='/static/img/no-photo.png'"
+                                            >
+                                            <div class="cast-name">${actor.nombre}</div>
+                                            <div class="cast-character">${actor.personaje}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${pelicula.similares.length > 0 ? `
+                            <div class="section">
+                                <h3>Películas Similares</h3>
+                                <div class="peliculas-grid">
+                                    ${pelicula.similares.map(sim => `
+                                        <div class="pelicula-card" onclick="verDetalle(${sim.id})">
+                                            <img src="${sim.poster}" class="pelicula-poster">
+                                            <div class="pelicula-info">
+                                                <div class="pelicula-titulo">${sim.titulo}</div>
+                                                <div class="pelicula-meta">
+                                                    <span class="rating">⭐ ${sim.calificacion.toFixed(1)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+            } catch (error) {
+                modalBody.innerHTML = '<div class="error">❌ Error al cargar detalles</div>';
+            }
+        }
+        
+        function cerrarModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+        
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('modal').onclick = function(e) {
+            if (e.target === this) {
+                cerrarModal();
+            }
+        };
+    </script>
+</body>
+</html>

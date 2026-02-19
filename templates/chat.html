@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat en Tiempo Real - Firebase</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .chat-container {
+            width: 90%;
+            max-width: 800px;
+            height: 600px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .chat-header {
+            background: #667eea;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .chat-header h1 {
+            margin-bottom: 5px;
+        }
+        
+        .online-users {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .messages-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f5f5f5;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message.own {
+            flex-direction: row-reverse;
+        }
+        
+        .message-avatar {
+            font-size: 30px;
+            flex-shrink: 0;
+        }
+        
+        .message-content {
+            max-width: 70%;
+        }
+        
+        .message-user {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 3px;
+            color: #667eea;
+        }
+        
+        .message.own .message-user {
+            text-align: right;
+            color: #764ba2;
+        }
+        
+        .message-bubble {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            word-wrap: break-word;
+        }
+        
+        .message.own .message-bubble {
+            background: #667eea;
+            color: white;
+        }
+        
+        .message-time {
+            font-size: 11px;
+            color: #999;
+            margin-top: 3px;
+        }
+        
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        input[type="text"]:focus {
+            border-color: #667eea;
+        }
+        
+        button {
+            padding: 12px 25px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        .modal {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+        
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .avatar-selector {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .avatar-option {
+            font-size: 30px;
+            cursor: pointer;
+            padding: 10px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .avatar-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .avatar-option.selected {
+            border-color: #667eea;
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Modal de Inicio -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <h2>🔥 Bienvenido al Chat</h2>
+            <p style="margin-bottom: 20px;">Elige tu avatar y nombre de usuario</p>
+            
+            <div class="avatar-selector" id="avatarSelector">
+                <div class="avatar-option selected" onclick="seleccionarAvatar('👤')">👤</div>
+                <div class="avatar-option" onclick="seleccionarAvatar('😀')">😀</div>
+                <div class="avatar-option" onclick="seleccionarAvatar('🦊')">🦊</div>
+                <div class="avatar-option" onclick="seleccionarAvatar('🐱')">🐱</div>
+                <div class="avatar-option" onclick="seleccionarAvatar('🐶')">🐶</div>
+                <div class="avatar-option" onclick="seleccionarAvatar('🦁')">🦁</div>
+                <div class="avatar-option" onclick="seleccionarAvatar('🐼')">🐼</div>
+                <div class="avatar-option" onclick="seleccionarAvatar('🐨')">🐨</div>
+                <div class="avatar-option" onclick="seleccionarAvatar('🐸')">🐸</div>
+                <div class="avatar-option" onclick="seleccionarAvatar('🦄')">🦄</div>
+            </div>
+            
+            <input type="text" id="nombreUsuario" placeholder="Tu nombre de usuario" maxlength="20">
+            <button onclick="iniciarChat()">Entrar al Chat</button>
+        </div>
+    </div>
+    
+    <!-- Ventana de Chat -->
+    <div class="chat-container" style="display: none;" id="chatContainer">
+        <div class="chat-header">
+            <h1>🔥 Chat en Tiempo Real</h1>
+            <div class="online-users" id="onlineUsers">Conectando...</div>
+        </div>
+        
+        <div class="messages-container" id="messagesContainer">
+            <div style="text-align: center; color: #999; padding: 20px;">
+                No hay mensajes aún. ¡Sé el primero en escribir!
+            </div>
+        </div>
+        
+        <div class="chat-input">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="messageInput" 
+                    placeholder="Escribe un mensaje..."
+                    onkeypress="if(event.key === 'Enter') enviarMensaje()"
+                >
+                <button onclick="enviarMensaje()">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let miUsuario = '';
+        let miAvatar = '👤';
+        let mensajesActuales = new Set();
+        
+        function seleccionarAvatar(avatar) {
+            miAvatar = avatar;
+            document.querySelectorAll('.avatar-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+        }
+        
+        function iniciarChat() {
+            const nombre = document.getElementById('nombreUsuario').value.trim();
+            
+            if (!nombre) {
+                alert('Por favor ingresa tu nombre de usuario');
+                return;
+            }
+            
+            miUsuario = nombre;
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('chatContainer').style.display = 'flex';
+            
+            // Registrar como online
+            registrarUsuarioOnline();
+            
+            // Cargar mensajes
+            cargarMensajes();
+            
+            // Actualizar cada 2 segundos
+            setInterval(cargarMensajes, 2000);
+            setInterval(actualizarUsuariosOnline, 5000);
+        }
+        
+        async function registrarUsuarioOnline() {
+            try {
+                await fetch('/api/usuarios/online', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ usuario: miUsuario })
+                });
+            } catch (error) {
+                console.error('Error al registrar usuario:', error);
+            }
+        }
+        
+        async function actualizarUsuariosOnline() {
+            try {
+                const response = await fetch('/api/usuarios/online');
+                const usuarios = await response.json();
+                
+                document.getElementById('onlineUsers').textContent = 
+                    `👥 ${usuarios.length} usuario(s) online: ${usuarios.join(', ')}`;
+            } catch (error) {
+                console.error('Error al obtener usuarios online:', error);
+            }
+        }
+        
+        async function cargarMensajes() {
+            try {
+                const response = await fetch('/api/mensajes');
+                const mensajes = await response.json();
+                
+                const container = document.getElementById('messagesContainer');
+                
+                // Si hay nuevos mensajes
+                if (mensajes.length > 0) {
+                    // Verificar si hay mensajes nuevos
+                    const hayNuevos = mensajes.some(m => !mensajesActuales.has(m.id));
+                    
+                    if (hayNuevos) {
+                        container.innerHTML = mensajes.map(msg => {
+                            mensajesActuales.add(msg.id);
+                            const esPropio = msg.usuario === miUsuario;
+                            const fecha = new Date(msg.timestamp);
+                            const tiempo = fecha.toLocaleTimeString('es-MX', { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                            });
+                            
+                            return `
+                                <div class="message ${esPropio ? 'own' : ''}">
+                                    <div class="message-avatar">${msg.avatar || '👤'}</div>
+                                    <div class="message-content">
+                                        <div class="message-user">${msg.usuario}</div>
+                                        <div class="message-bubble">
+                                            ${msg.texto}
+                                        </div>
+                                        <div class="message-time">${tiempo}</div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                        
+                        // Scroll al final
+                        container.scrollTop = container.scrollHeight;
+                    }
+                }
+            } catch (error) {
+                console.error('Error al cargar mensajes:', error);
+            }
+        }
+        
+        async function enviarMensaje() {
+            const input = document.getElementById('messageInput');
+            const texto = input.value.trim();
+            
+            if (!texto) return;
+            
+            try {
+                const response = await fetch('/api/mensajes', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        usuario: miUsuario,
+                        texto: texto,
+                        avatar: miAvatar
+                    })
+                });
+                
+                if (response.ok) {
+                    input.value = '';
+                    cargarMensajes();
+                }
+            } catch (error) {
+                console.error('Error al enviar mensaje:', error);
+                alert('Error al enviar mensaje');
+            }
+        }
+    </script>
+</body>
+</html>

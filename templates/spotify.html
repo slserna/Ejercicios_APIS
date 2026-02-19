@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Música - Spotify</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1DB954 0%, #191414 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        h1 {
+            color: #1DB954;
+            font-size: 2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .search-container {
+            flex: 1;
+            max-width: 600px;
+            min-width: 300px;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            background: #282828;
+            color: white;
+            font-size: 16px;
+        }
+        
+        input[type="text"]:focus {
+            outline: 2px solid #1DB954;
+        }
+        
+        select {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            background: #282828;
+            color: white;
+            cursor: pointer;
+        }
+        
+        button {
+            padding: 12px 30px;
+            background: #1DB954;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+        }
+        
+        button:hover {
+            background: #1ed760;
+            transform: scale(1.05);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        
+        .resultados-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .resultado-card {
+            background: rgba(40, 40, 40, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .resultado-card:hover {
+            background: rgba(40, 40, 40, 1);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(29, 185, 84, 0.3);
+        }
+        
+        .resultado-imagen {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 10px;
+            background: #282828;
+            margin-bottom: 12px;
+        }
+        
+        .resultado-nombre {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 16px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .resultado-info {
+            color: #b3b3b3;
+            font-size: 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .resultado-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #404040;
+            font-size: 13px;
+        }
+        
+        .play-button {
+            width: 40px;
+            height: 40px;
+            background: #1DB954;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 10px;
+        }
+        
+        .play-button:hover {
+            transform: scale(1.1);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 18px;
+            color: #b3b3b3;
+        }
+        
+        .error {
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px solid #ff0000;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 20px;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 10px;
+            font-size: 12px;
+            color: #b3b3b3;
+            flex-wrap: wrap;
+        }
+        
+        .stat-badge {
+            background: rgba(29, 185, 84, 0.2);
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+        
+        /* Audio player personalizado */
+        audio {
+            width: 100%;
+            height: 40px;
+            margin-top: 10px;
+            border-radius: 20px;
+        }
+        
+        audio::-webkit-media-controls-panel {
+            background: #282828;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>
+                <span>🎵</span>
+                <span>Spotify Search</span>
+            </h1>
+            
+            <div class="search-container">
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        id="busqueda" 
+                        placeholder="Buscar canciones, artistas, álbumes..."
+                        onkeypress="if(event.key === 'Enter') buscar()"
+                    >
+                    <select id="tipo">
+                        <option value="track">🎵 Canciones</option>
+                        <option value="artist">👤 Artistas</option>
+                        <option value="album">💿 Álbumes</option>
+                        <option value="playlist">📋 Playlists</option>
+                    </select>
+                    <button onclick="buscar()">Buscar</button>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div id="resultados"></div>
+    </div>
+    
+    <!-- Reproductor de audio actual -->
+    <div id="audioPlayer" style="position: fixed; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.95); padding: 15px; display: none; backdrop-filter: blur(20px);">
+        <div style="max-width: 1400px; margin: 0 auto; display: flex; align-items: center; gap: 15px;">
+            <img id="playerImage" style="width: 60px; height: 60px; border-radius: 8px;">
+            <div style="flex: 1;">
+                <div id="playerTrack" style="font-weight: bold;"></div>
+                <div id="playerArtist" style="color: #b3b3b3; font-size: 14px;"></div>
+            </div>
+            <audio id="audio" controls style="flex: 1; max-width: 400px;"></audio>
+        </div>
+    </div>
+
+    <script>
+        let audioActual = null;
+        
+        async function buscar() {
+            const resultados = document.getElementById('resultados');
+            const busqueda = document.getElementById('busqueda').value.trim();
+            const tipo = document.getElementById('tipo').value;
+            
+            if (!busqueda) {
+                alert('Por favor ingresa un término de búsqueda');
+                return;
+            }
+            
+            resultados.innerHTML = '<div class="loading">🔍 Buscando en Spotify...</div>';
+            
+            try {
+                const url = `/api/spotify/buscar?q=${encodeURIComponent(busqueda)}&tipo=${tipo}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.error) {
+                    resultados.innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                    return;
+                }
+                
+                if (data.length === 0) {
+                    resultados.innerHTML = '<div class="loading">No se encontraron resultados</div>';
+                    return;
+                }
+                
+                mostrarResultados(data, tipo);
+                
+            } catch (error) {
+                resultados.innerHTML = '<div class="error">❌ Error al buscar en Spotify</div>';
+                console.error('Error:', error);
+            }
+        }
+        
+        function mostrarResultados(datos, tipo) {
+            const resultados = document.getElementById('resultados');
+            
+            if (tipo === 'track') {
+                resultados.innerHTML = `
+                    <div class="resultados-grid">
+                        ${datos.map(track => `
+                            <div class="resultado-card">
+                                <img src="${track.imagen || '/static/img/no-music.png'}" class="resultado-imagen">
+                                <div class="resultado-nombre">${track.nombre}</div>
+                                <div class="resultado-info">${track.artista_principal}</div>
+                                <div class="resultado-info" style="font-size: 12px;">${track.album}</div>
+                                
+                                <div class="stats">
+                                    <span class="stat-badge">⏱️ ${track.duracion}</span>
+                                    <span class="stat-badge">🔥 ${track.popularidad}%</span>
+                                    ${track.explicito ? '<span class="stat-badge">🅴</span>' : ''}
+                                </div>
+                                
+                                ${track.preview_url ? `
+                                    <div class="play-button" onclick="reproducir('${track.preview_url}', '${track.nombre.replace(/'/g, "\\'")}', '${track.artista_principal.replace(/'/g, "\\'")}', '${track.imagen}')">
+                                        ▶️
+                                    </div>
+                                ` : ''}
+                                
+                                <div class="resultado-meta">
+                                    <a href="${track.spotify_url}" target="_blank" style="color: #1DB954; text-decoration: none;">
+                                        Abrir en Spotify
+                                    </a>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            else if (tipo === 'artist') {
+                resultados.innerHTML = `
+                    <div class="resultados-grid">
+                        ${datos.map(artist => `
+                            <div class="resultado-card" onclick="verArtista('${artist.id}')">
+                                <img src="${artist.imagen || '/static/img/no-artist.png'}" class="resultado-imagen" style="border-radius: 50%;">
+                                <div class="resultado-nombre">${artist.nombre}</div>
+                                
+                                <div class="stats">
+                                    <span class="stat-badge">👥 ${artist.seguidores.toLocaleString()}</span>
+                                    <span class="stat-badge">🔥 ${artist.popularidad}%</span>
+                                </div>
+                                
+                                ${artist.generos.length > 0 ? `
+                                    <div class="resultado-info" style="margin-top: 10px;">
+                                        ${artist.generos.slice(0, 2).join(', ')}
+                                    </div>
+                                ` : ''}
+                                
+                                <div class="resultado-meta">
+                                    <a href="${artist.spotify_url}" target="_blank" style="color: #1DB954; text-decoration: none;" onclick="event.stopPropagation()">
+                                        Abrir en Spotify
+                                    </a>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            else if (tipo === 'album') {
+                resultados.innerHTML = `
+                    <div class="resultados-grid">
+                        ${datos.map(album => `
+                            <div class="resultado-card" onclick="verAlbum('${album.id}')">
+                                <img src="${album.imagen || '/static/img/no-album.png'}" class="resultado-imagen">
+                                <div class="resultado-nombre">${album.nombre}</div>
+                                <div class="resultado-info">${album.artistas.join(', ')}</div>
+                                
+                                <div class="stats">
+                                    <span class="stat-badge">📅 ${album.fecha_lanzamiento}</span>
+                                    <span class="stat-badge">🎵 ${album.total_tracks} tracks</span>
+                                </div>
+                                
+                                <div class="resultado-meta">
+                                    <span style="color: #b3b3b3; text-transform: capitalize;">${album.tipo}</span>
+                                    <a href="${album.spotify_url}" target="_blank" style="color: #1DB954; text-decoration: none;" onclick="event.stopPropagation()">
+                                        Spotify
+                                    </a>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            else if (tipo === 'playlist') {
+                resultados.innerHTML = `
+                    <div class="resultados-grid">
+                        ${datos.map(playlist => `
+                            <div class="resultado-card">
+                                <img src="${playlist.imagen || '/static/img/no-playlist.png'}" class="resultado-imagen">
+                                <div class="resultado-nombre">${playlist.nombre}</div>
+                                <div class="resultado-info">Por ${playlist.owner}</div>
+                                
+                                <div class="stats">
+                                    <span class="stat-badge">🎵 ${playlist.total_tracks} canciones</span>
+                                    ${playlist.publica ? '<span class="stat-badge">🌍 Pública</span>' : '<span class="stat-badge">🔒 Privada</span>'}
+                                </div>
+                                
+                                ${playlist.descripcion ? `
+                                    <div class="resultado-info" style="margin-top: 10px; font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                        ${playlist.descripcion}
+                                    </div>
+                                ` : ''}
+                                
+                                <div class="resultado-meta">
+                                    <a href="${playlist.spotify_url}" target="_blank" style="color: #1DB954; text-decoration: none;">
+                                        Abrir en Spotify
+                                    </a>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        }
+        
+        function reproducir(previewUrl, nombre, artista, imagen) {
+            const audio = document.getElementById('audio');
+            const player = document.getElementById('audioPlayer');
+            
+            // Actualizar información
+            document.getElementById('playerImage').src = imagen;
+            document.getElementById('playerTrack').textContent = nombre;
+            document.getElementById('playerArtist').textContent = artista;
+            
+            // Reproducir
+            audio.src = previewUrl;
+            audio.play();
+            player.style.display = 'block';
+        }
+        
+        async function verArtista(artistId) {
+            const resultados = document.getElementById('resultados');
+            resultados.innerHTML = '<div class="loading">Cargando información del artista...</div>';
+            
+            try {
+                const response = await fetch(`/api/spotify/artista/${artistId}`);
+                const artista = await response.json();
+                
+                if (artista.error) {
+                    resultados.innerHTML = `<div class="error">${artista.error}</div>`;
+                    return;
+                }
+                
+                resultados.innerHTML = `
+                    <div style="margin-bottom: 30px;">
+                        <button onclick="location.reload()" style="background: #282828;">← Volver</button>
+                    </div>
+                    
+                    <div style="display: flex; gap: 40px; margin-bottom: 40px; align-items: start;">
+                        <img src="${artista.imagen}" style="width: 250px; height: 250px; object-fit: cover; border-radius: 50%;">
+                        <div>
+                            <h2 style="font-size: 3em; margin-bottom: 10px;">${artista.nombre}</h2>
+                            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                                <span class="stat-badge" style="font-size: 16px;">👥 ${artista.seguidores.toLocaleString()} seguidores</span>
+                                <span class="stat-badge" style="font-size: 16px;">🔥 ${artista.popularidad}% popularidad</span>
+                            </div>
+                            ${artista.generos.length > 0 ? `
+                                <div style="margin-top: 15px;">
+                                    ${artista.generos.map(g => `<span class="stat-badge">${g}</span>`).join(' ')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <h3 style="margin-bottom: 20px; color: #1DB954;">🎵 Canciones Más Populares</h3>
+                    <div class="resultados-grid">
+                        ${artista.top_canciones.map((track, index) => `
+                            <div class="resultado-card">
+                                <div style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); padding: 5px 10px; border-radius: 20px;">
+                                    #${index + 1}
+                                </div>
+                                <img src="${track.imagen}" class="resultado-imagen">
+                                <div class="resultado-nombre">${track.nombre}</div>
+                                <div class="resultado-info">${track.album}</div>
+                                <div class="stats">
+                                    <span class="stat-badge">⏱️ ${track.duracion}</span>
+                                </div>
+                                ${track.preview ? `
+                                    <div class="play-button" onclick="reproducir('${track.preview}', '${track.nombre.replace(/'/g, "\\'")}', '${artista.nombre}', '${track.imagen}')">
+                                        ▶️
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    ${artista.albums.length > 0 ? `
+                        <h3 style="margin: 40px 0 20px; color: #1DB954;">💿 Álbumes</h3>
+                        <div class="resultados-grid">
+                            ${artista.albums.map(album => `
+                                <div class="resultado-card">
+                                    <img src="${album.imagen}" class="resultado-imagen">
+                                    <div class="resultado-nombre">${album.nombre}</div>
+                                    <div class="stats">
+                                        <span class="stat-badge">📅 ${album.fecha}</span>
+                                        <span class="stat-badge">🎵 ${album.total_tracks}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                `;
+                
+            } catch (error) {
+                resultados.innerHTML = '<div class="error">Error al cargar artista</div>';
+            }
+        }
+        
+        async function verAlbum(albumId) {
+            const resultados = document.getElementById('resultados');
+            resultados.innerHTML = '<div class="loading">Cargando álbum...</div>';
+            
+            try {
+                const response = await fetch(`/api/spotify/album/${albumId}`);
+                const album = await response.json();
+                
+                resultados.innerHTML = `
+                    <div style="margin-bottom: 30px;">
+                        <button onclick="location.reload()" style="background: #282828;">← Volver</button>
+                    </div>
+                    
+                    <div style="display: flex; gap: 40px; margin-bottom: 40px;">
+                        <img src="${album.imagen}" style="width: 250px; height: 250px; border-radius: 10px;">
+                        <div>
+                            <h2 style="font-size: 2.5em; margin-bottom: 10px;">${album.nombre}</h2>
+                            <p style="font-size: 18px; color: #b3b3b3; margin-bottom: 15px;">${album.artistas.join(', ')}</p>
+                            <div style="display: flex; gap: 15px;">
+                                <span class="stat-badge" style="font-size: 14px;">📅 ${album.fecha_lanzamiento}</span>
+                                <span class="stat-badge" style="font-size: 14px;">🎵 ${album.total_tracks} canciones</span>
+                                <span class="stat-badge" style="font-size: 14px;">🔥 ${album.popularidad}%</span>
+                            </div>
+                            ${album.sello ? `<p style="margin-top: 15px; color: #b3b3b3;">Sello: ${album.sello}</p>` : ''}
+                        </div>
+                    </div>
+                    
+                    <h3 style="margin-bottom: 20px; color: #1DB954;">Canciones</h3>
+                    <div style="background: rgba(40,40,40,0.5); border-radius: 15px; padding: 20px;">
+                        ${album.tracks.map((track, index) => `
+                            <div style="display: flex; align-items: center; gap: 15px; padding: 12px; border-radius: 8px; margin-bottom: 10px; background: ${index % 2 === 0 ? 'rgba(0,0,0,0.2)' : 'transparent'};">
+                                <span style="width: 30px; text-align: center; color: #b3b3b3;">${track.numero}</span>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: bold;">${track.nombre}</div>
+                                </div>
+                                <span style="color: #b3b3b3;">${track.duracion}</span>
+                                ${track.preview ? `
+                                    <button onclick="reproducir('${track.preview}', '${track.nombre.replace(/'/g, "\\'")}', '${album.artistas[0]}', '${album.imagen}')" style="width: 40px; height: 40px; border-radius: 50%; padding: 0;">
+                                        ▶️
+                                    </button>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultados.innerHTML = '<div class="error">Error al cargar álbum</div>';
+            }
+        }
+    </script>
+</body>
+</html>

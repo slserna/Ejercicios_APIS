@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API REST - Gestión de Productos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        table {
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+        }
+        
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        tr:hover {
+            background: #f0f0f0;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            max-width: 500px;
+            margin: 100px auto;
+            padding: 30px;
+            border-radius: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💾 API REST - Gestión de Productos</h1>
+            <p>Sistema CRUD completo con SQLite</p>
+        </header>
+        
+        <div class="stats-grid" id="stats"></div>
+        
+        <div class="controls">
+            <button class="btn btn-success" onclick="abrirModalNuevo()">➕ Nuevo Producto</button>
+            <button class="btn btn-primary" onclick="cargarProductos()">🔄 Recargar</button>
+            <select id="filtroCategoria" onchange="cargarProductos()">
+                <option value="">Todas las categorías</option>
+            </select>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Categoría</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="productosTable">
+                <tr>
+                    <td colspan="7" style="text-align: center;">Cargando...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Modal para Crear/Editar -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitulo">Nuevo Producto</h2>
+            <form id="productoForm">
+                <input type="hidden" id="productoId">
+                
+                <div class="form-group">
+                    <label>Nombre *</label>
+                    <input type="text" id="nombre" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea id="descripcion"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Precio *</label>
+                    <input type="number" id="precio" step="0.01" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Stock</label>
+                    <input type="number" id="stock" value="0">
+                </div>
+                
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <input type="text" id="categoria">
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <button type="submit" class="btn btn-success">Guardar</button>
+                    <button type="button" class="btn" onclick="cerrarModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Cargar datos al iniciar
+        window.onload = () => {
+            cargarEstadisticas();
+            cargarCategorias();
+            cargarProductos();
+        };
+        
+        async function cargarEstadisticas() {
+            try {
+                const response = await fetch('/api/productos/stats');
+                const data = await response.json();
+                
+                const statsDiv = document.getElementById('stats');
+                statsDiv.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-value">${data.generales.total}</div>
+                        <div class="stat-label">Total Productos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$${data.generales.precio_promedio.toFixed(2)}</div>
+                        <div class="stat-label">Precio Promedio</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${data.generales.stock_total}</div>
+                        <div class="stat-label">Stock Total</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${data.por_categoria.length}</div>
+                        <div class="stat-label">Categorías</div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error al cargar estadísticas:', error);
+            }
+        }
+        
+        async function cargarCategorias() {
+            try {
+                const response = await fetch('/api/categorias');
+                const categorias = await response.json();
+                
+                const select = document.getElementById('filtroCategoria');
+                categorias.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error al cargar categorías:', error);
+            }
+        }
+        
+        async function cargarProductos() {
+            const tabla = document.getElementById('productosTable');
+            const categoria = document.getElementById('filtroCategoria').value;
+            
+            tabla.innerHTML = '<tr><td colspan="7" style="text-align: center;">Cargando...</td></tr>';
+            
+            try {
+                let url = '/api/productos';
+                if (categoria) {
+                    url += `?categoria=${categoria}`;
+                }
+                
+                const response = await fetch(url);
+                const productos = await response.json();
+                
+                if (productos.length === 0) {
+                    tabla.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay productos</td></tr>';
+                    return;
+                }
+                
+                tabla.innerHTML = productos.map(p => `
+                    <tr>
+                        <td>${p.id}</td>
+                        <td><strong>${p.nombre}</strong></td>
+                        <td>${p.descripcion || '-'}</td>
+                        <td>$${p.precio.toFixed(2)}</td>
+                        <td>${p.stock}</td>
+                        <td><span style="background: #667eea; color: white; padding: 3px 10px; border-radius: 12px; font-size: 12px;">${p.categoria}</span></td>
+                        <td>
+                            <button class="btn btn-primary" onclick="editarProducto(${p.id})">✏️</button>
+                            <button class="btn btn-danger" onclick="eliminarProducto(${p.id})">🗑️</button>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                cargarEstadisticas(); // Actualizar estadísticas
+                
+            } catch (error) {
+                tabla.innerHTML = '<tr><td colspan="7" style="text-align: center; color: red;">Error al cargar productos</td></tr>';
+                console.error('Error:', error);
+            }
+        }
+        
+        function abrirModalNuevo() {
+            document.getElementById('modalTitulo').textContent = 'Nuevo Producto';
+            document.getElementById('productoForm').reset();
+            document.getElementById('productoId').value = '';
+            document.getElementById('modal').style.display = 'block';
+        }
+        
+        async function editarProducto(id) {
+            try {
+                const response = await fetch(`/api/productos/${id}`);
+                const producto = await response.json();
+                
+                document.getElementById('modalTitulo').textContent = 'Editar Producto';
+                document.getElementById('productoId').value = producto.id;
+                document.getElementById('nombre').value = producto.nombre;
+                document.getElementById('descripcion').value = producto.descripcion || '';
+                document.getElementById('precio').value = producto.precio;
+                document.getElementById('stock').value = producto.stock;
+                document.getElementById('categoria').value = producto.categoria;
+                
+                document.getElementById('modal').style.display = 'block';
+            } catch (error) {
+                alert('Error al cargar producto');
+            }
+        }
+        
+        function cerrarModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+        
+        document.getElementById('productoForm').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            const id = document.getElementById('productoId').value;
+            const data = {
+                nombre: document.getElementById('nombre').value,
+                descripcion: document.getElementById('descripcion').value,
+                precio: parseFloat(document.getElementById('precio').value),
+                stock: parseInt(document.getElementById('stock').value),
+                categoria: document.getElementById('categoria').value
+            };
+            
+            try {
+                let response;
+                if (id) {
+                    // Actualizar
+                    response = await fetch(`/api/productos/${id}`, {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    // Crear
+                    response = await fetch('/api/productos', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(data)
+                    });
+                }
+                
+                if (response.ok) {
+                    cerrarModal();
+                    cargarProductos();
+                    cargarCategorias(); // Recargar por si hay nueva categoría
+                    alert(id ? 'Producto actualizado' : 'Producto creado');
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.error);
+                }
+            } catch (error) {
+                alert('Error al guardar producto');
+            }
+        };
+        
+        async function eliminarProducto(id) {
+            if (!confirm('¿Estás seguro de eliminar este producto?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/productos/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    cargarProductos();
+                    alert('Producto eliminado');
+                } else {
+                    alert('Error al eliminar producto');
+                }
+            } catch (error) {
+                alert('Error al eliminar producto');
+            }
+        }
+    </script>
+</body>
+</html>

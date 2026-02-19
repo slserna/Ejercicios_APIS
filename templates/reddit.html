@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador de Reddit</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #DAE0E6;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: #FF4500;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .controles {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        input, select, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        input {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        button {
+            background: #FF4500;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background: #E03D00;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: white;
+            border: none;
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .tab.active {
+            background: #FF4500;
+            color: white;
+        }
+        
+        .post {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 3px solid #FF4500;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+        
+        .post-titulo {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1c1c1c;
+            margin-bottom: 5px;
+            flex: 1;
+        }
+        
+        .post-titulo:hover {
+            color: #FF4500;
+        }
+        
+        .post-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #7c7c7c;
+            flex-wrap: wrap;
+        }
+        
+        .post-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .post-stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+        
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        
+        .subreddit-tag {
+            background: #FF4500;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <span>🤖</span>
+                <span>Analizador de Reddit</span>
+            </h1>
+            <p>Explora subreddits y busca contenido en Reddit</p>
+        </header>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="cambiarTab('subreddit')">Por Subreddit</button>
+            <button class="tab" onclick="cambiarTab('busqueda')">Buscar</button>
+        </div>
+        
+        <div class="controles" id="controles-subreddit">
+            <div class="input-group">
+                <input type="text" id="subreddit" placeholder="Nombre del subreddit (ej: python)" value="python">
+                <select id="filtro">
+                    <option value="hot">🔥 Hot</option>
+                    <option value="new">🆕 Nuevos</option>
+                    <option value="top">⭐ Top</option>
+                </select>
+                <select id="limit">
+                    <option value="10">10 posts</option>
+                    <option value="25">25 posts</option>
+                    <option value="50">50 posts</option>
+                </select>
+                <button onclick="cargarSubreddit()">Cargar Posts</button>
+            </div>
+        </div>
+        
+        <div class="controles" id="controles-busqueda" style="display: none;">
+            <div class="input-group">
+                <input type="text" id="busqueda" placeholder="Buscar en Reddit...">
+                <button onclick="buscarReddit()">Buscar</button>
+            </div>
+        </div>
+        
+        <div id="resultados"></div>
+    </div>
+
+    <script>
+        function cambiarTab(tab) {
+            // Actualizar tabs activos
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Mostrar/ocultar controles
+            if (tab === 'subreddit') {
+                document.getElementById('controles-subreddit').style.display = 'block';
+                document.getElementById('controles-busqueda').style.display = 'none';
+            } else {
+                document.getElementById('controles-subreddit').style.display = 'none';
+                document.getElementById('controles-busqueda').style.display = 'block';
+            }
+            
+            document.getElementById('resultados').innerHTML = '';
+        }
+        
+        async function cargarSubreddit() {
+            const resultados = document.getElementById('resultados');
+            const subreddit = document.getElementById('subreddit').value;
+            const filtro = document.getElementById('filtro').value;
+            const limit = document.getElementById('limit').value;
+            
+            if (!subreddit) {
+                alert('Por favor ingresa un subreddit');
+                return;
+            }
+            
+            resultados.innerHTML = '<div class="loading">⏳ Cargando posts...</div>';
+            
+            try {
+                const url = `/api/reddit/posts?subreddit=${subreddit}&filtro=${filtro}&limit=${limit}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.error) {
+                    resultados.innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                    return;
+                }
+                
+                mostrarPosts(data.posts, data.subreddit);
+                
+            } catch (error) {
+                resultados.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function buscarReddit() {
+            const resultados = document.getElementById('resultados');
+            const query = document.getElementById('busqueda').value;
+            
+            if (!query) {
+                alert('Por favor ingresa un término de búsqueda');
+                return;
+            }
+            
+            resultados.innerHTML = '<div class="loading">🔍 Buscando...</div>';
+            
+            try {
+                const url = `/api/reddit/buscar?q=${encodeURIComponent(query)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.error) {
+                    resultados.innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                    return;
+                }
+                
+                mostrarPosts(data);
+                
+            } catch (error) {
+                resultados.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        function mostrarPosts(posts, subreddit = null) {
+            const resultados = document.getElementById('resultados');
+            
+            if (posts.length === 0) {
+                resultados.innerHTML = '<div class="loading">No se encontraron posts</div>';
+                return;
+            }
+            
+            resultados.innerHTML = posts.map(post => `
+                <div class="post">
+                    <div class="post-header">
+                        <div style="flex: 1;">
+                            <a href="${post.url}" target="_blank" style="text-decoration: none;">
+                                <div class="post-titulo">${post.titulo}</div>
+                            </a>
+                            ${post.selftext ? `<p style="color: #666; margin-top: 10px;">${post.selftext}</p>` : ''}
+                        </div>
+                        ${post.thumbnail ? `<img src="${post.thumbnail}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 5px;">` : ''}
+                    </div>
+                    <div class="post-meta">
+                        ${post.subreddit ? `<span class="subreddit-tag">r/${post.subreddit}</span>` : ''}
+                        <span>👤 u/${post.autor}</span>
+                        <span>📅 ${post.fecha}</span>
+                    </div>
+                    <div class="post-stats">
+                        <div class="stat">
+                            <span>⬆️</span>
+                            <span>${post.puntos.toLocaleString()} puntos</span>
+                        </div>
+                        <div class="stat">
+                            <span>💬</span>
+                            <span>${post.comentarios} comentarios</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Cargar posts por defecto al iniciar
+        window.onload = () => cargarSubreddit();
+    </script>
+</body>
+</html>

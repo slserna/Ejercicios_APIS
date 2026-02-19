@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: #161b22;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #30363d;
+        }
+        
+        h1 {
+            color: #58a6ff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .search-box {
+            background: #161b22;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #30363d;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #c9d1d9;
+            font-size: 16px;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+        
+        button {
+            margin-top: 10px;
+            width: 100%;
+            padding: 12px;
+            background: #238636;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background: #2ea043;
+        }
+        
+        .user-card {
+            background: #161b22;
+            padding: 30px;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            margin-bottom: 20px;
+        }
+        
+        .user-header {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid #58a6ff;
+        }
+        
+        .user-info h2 {
+            color: #58a6ff;
+            margin-bottom: 5px;
+        }
+        
+        .user-bio {
+            color: #8b949e;
+            margin: 10px 0;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-box {
+            background: #0d1117;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #30363d;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #8b949e;
+            margin-top: 5px;
+        }
+        
+        .repos-section {
+            background: #161b22;
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+        }
+        
+        .repo-card {
+            background: #0d1117;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            transition: border-color 0.2s;
+        }
+        
+        .repo-card:hover {
+            border-color: #58a6ff;
+        }
+        
+        .repo-name {
+            color: #58a6ff;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .repo-desc {
+            color: #8b949e;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .repo-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #8b949e;
+        }
+        
+        .repo-stats span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #8b949e;
+        }
+        
+        .error {
+            background: #da3633;
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        
+        .language-tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            background: #238636;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <span>🐙</span>
+                <span>GitHub Dashboard</span>
+            </h1>
+            <p>Explora usuarios y repositorios de GitHub</p>
+        </header>
+        
+        <div class="search-box">
+            <input 
+                type="text" 
+                id="username" 
+                placeholder="Ingresa un nombre de usuario de GitHub (ej: torvalds, gaearon, etc.)"
+                onkeypress="if(event.key === 'Enter') buscarUsuario()"
+            >
+            <button onclick="buscarUsuario()">Buscar Usuario</button>
+        </div>
+        
+        <div id="resultados"></div>
+    </div>
+
+    <script>
+        async function buscarUsuario() {
+            const resultados = document.getElementById('resultados');
+            const username = document.getElementById('username').value.trim();
+            
+            if (!username) {
+                alert('Por favor ingresa un nombre de usuario');
+                return;
+            }
+            
+            resultados.innerHTML = '<div class="loading">🔍 Buscando usuario...</div>';
+            
+            try {
+                const response = await fetch(`/api/github/usuario/${username}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    resultados.innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                    return;
+                }
+                
+                mostrarUsuario(data);
+                
+            } catch (error) {
+                resultados.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        function mostrarUsuario(data) {
+            const resultados = document.getElementById('resultados');
+            
+            resultados.innerHTML = `
+                <div class="user-card">
+                    <div class="user-header">
+                        <img src="${data.avatar}" alt="${data.nombre}" class="avatar">
+                        <div class="user-info">
+                            <h2>${data.nombre}</h2>
+                            <p style="color: #8b949e;">@${data.username}</p>
+                            ${data.bio ? `<p class="user-bio">${data.bio}</p>` : ''}
+                            ${data.ubicacion ? `<p style="color: #8b949e; font-size: 14px;">📍 ${data.ubicacion}</p>` : ''}
+                            ${data.blog ? `<p style="color: #58a6ff; font-size: 14px;"><a href="${data.blog}" target="_blank">🔗 ${data.blog}</a></p>` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="stats">
+                        <div class="stat-box">
+                            <div class="stat-value">${data.repositorios}</div>
+                            <div class="stat-label">Repositorios</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${data.seguidores.toLocaleString()}</div>
+                            <div class="stat-label">Seguidores</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${data.siguiendo.toLocaleString()}</div>
+                            <div class="stat-label">Siguiendo</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">⭐ ${data.total_stars.toLocaleString()}</div>
+                            <div class="stat-label">Total Stars</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">🍴 ${data.total_forks.toLocaleString()}</div>
+                            <div class="stat-label">Total Forks</div>
+                        </div>
+                    </div>
+                    
+                    ${data.top_lenguajes.length > 0 ? `
+                    <div style="margin-top: 20px;">
+                        <h3 style="color: #58a6ff; margin-bottom: 10px;">Top Lenguajes</h3>
+                        <div style="display: flex; gap: 10px;">
+                            ${data.top_lenguajes.map(l => `
+                                <span class="language-tag">${l.lenguaje} (${l.repos})</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                <div class="repos-section">
+                    <h3 style="color: #58a6ff; margin-bottom: 15px;">🌟 Repositorios Destacados</h3>
+                    ${data.repos_destacados.map(repo => `
+                        <div class="repo-card">
+                            <a href="${repo.url}" target="_blank" style="text-decoration: none;">
+                                <div class="repo-name">${repo.nombre}</div>
+                            </a>
+                            ${repo.descripcion ? `<div class="repo-desc">${repo.descripcion}</div>` : ''}
+                            <div class="repo-stats">
+                                ${repo.lenguaje ? `<span class="language-tag">${repo.lenguaje}</span>` : ''}
+                                <span>⭐ ${repo.stars.toLocaleString()}</span>
+                                <span>🍴 ${repo.forks.toLocaleString()}</span>
+                                <span>📅 ${repo.actualizado}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // Ejemplos de usuarios para probar
+        const ejemplos = ['torvalds', 'gaearon', 'tj', 'sindresorhus', 'addyosmani'];
+        console.log('Usuarios de ejemplo para probar:', ejemplos.join(', '));
+    </script>
+</body>
+</html>
