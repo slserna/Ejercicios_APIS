@@ -1,4 +1,4 @@
-# EJERCICIOS DE CREACION DE APP CON 10 APIs
+# ✨  EJERCICIOS DE CREACION DE APP CON 10 APIs  ✨ 
 ## GTID153 𓆝 𓆟 𓆞 𓆝 𓆟 𓆝 𓆟 𓆞 𓆝 𓆟 𓆝 𓆟 𓆞 𓆝 𓆟 𓆝 𓆟 
 ## Alumna: Serna Rodriguez Sara Lizbeth
 ### Asignatura: APLICACIONES WEB ORIENTADA A SERVICIOS
@@ -14,7 +14,7 @@
   </tr>
   <tr>
     <td>
-      <img src="https://github.com/slserna/MAEATE/blob/master/documentos/Imagenes/Pantalla_Inicio.png" width="260"/>
+      <img src="[https://github.com/slserna/MAEATE/blob/master/documentos/Imagenes/Pantalla_Inicio.png](https://github.com/slserna/Ejercicios_APIS/blob/main/chat.png)" width="260"/>
     </td>
     <td>
       <img src="https://github.com/slserna/MAEATE/blob/master/documentos/Imagenes/Pantalla_Principal.jpeg" width="260"/>
