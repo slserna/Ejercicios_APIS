@@ -11,4 +11,32 @@
   <img src="https://github.com/slserna/Ejercicios_APIS/blob/main/chat.png" alt="Chat Image">
 </p>
 
+<p align="center">
+  <img src="https://github.com/slserna/Ejercicios_APIS/blob/main/climaa.jpg" alt="Chat Image">
+</p
+
+  <p align="center">
+  <img src="https://github.com/slserna/Ejercicios_APIS/blob/main/divisas.png" alt="Chat Image">
+</p>
+
+  <p align="center">
+  <img src="https://github.com/slserna/Ejercicios_APIS/blob/main/libross.jpg" alt="Chat Image">
+</p>
+
+  <p align="center">
+  <img src="https://github.com/slserna/Ejercicios_APIS/blob/main/lugares.png" alt="Chat Image">
+</p>
+
+  <p align="center">
+  <img src="https://github.com/slserna/Ejercicios_APIS/blob/main/peliculas.png" alt="Chat Image">
+</p>
+
+  <p align="center">
+  <img src="https://github.com/slserna/Ejercicios_APIS/blob/main/productos.png" alt="Chat Image">
+</p>
+
+  <p align="center">
+  <img src="https://github.com/slserna/Ejercicios_APIS/blob/main/reddit.png" alt="Chat Image">
+</p>
+
 
