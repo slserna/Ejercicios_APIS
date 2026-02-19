@@ -6,6 +6,8 @@
 # ✧˖° ✧˖° ✧˖° ✧˖°✧˖° ✧˖°✧˖° ✧˖°✧˖° ✧˖°✧˖° ✧˖° ✧˖° ✧˖°✧˖° ✧˖°✧˖° ✧˖°✧˖° ✧˖°
 # -----------------------------------------------------------------
 ## 📸 Capturas de las apps 
+
+<img src="[https://github.com/slserna/MAEATE/blob/master/documentos/Imagenes/Pantalla_Inicio.png](https://github.com/slserna/Ejercicios_APIS/blob/main/chat.png)" width="260"/>
 <table>
   <tr>
     <th>🔐 Inicio de sesión</th>
