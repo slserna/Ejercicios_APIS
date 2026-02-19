@@ -7,52 +7,8 @@
 # -----------------------------------------------------------------
 ## 📸 Capturas de las apps 
 
-<img src="[https://github.com/slserna/MAEATE/blob/master/documentos/Imagenes/Pantalla_Inicio.png](https://github.com/slserna/Ejercicios_APIS/blob/main/chat.png)" width="260"/>
-<table>
-  <tr>
-    <th>🔐 Inicio de sesión</th>
-    <th>🗺️ Pantalla principal</th>
-    <th>🗺️ Mapa</th>
-  </tr>
-  <tr>
-    <td>
-      <img src="[https://github.com/slserna/MAEATE/blob/master/documentos/Imagenes/Pantalla_Inicio.png](https://github.com/slserna/Ejercicios_APIS/blob/main/chat.png)" width="260"/>
-    </td>
-    <td>
-      <img src="https://github.com/slserna/MAEATE/blob/master/documentos/Imagenes/Pantalla_Principal.jpeg" width="260"/>
-    </td>
-    <td>
-      <img src="https://github.com/slserna/MAEATE/blob/master/documentos/Imagenes/Pantalla_Mapa.jpeg" width="260"/>
-    </td>
-  </tr>
+<p align="center">
+  <img src="https://github.com/slserna/Ejercicios_APIS/blob/main/chat.png" alt="Chat Image">
+</p>
 
-  <tr>
-    <th>📤 Subir contenido</th>
-    <th>👤 Perfil de usuario</th>
-    <th>👥 Comunidad</th>
-  </tr>
-  <tr>
-    <td>
-      <img src="https://github.com/slserna/MAEATE/blob/master/documentos/Imagenes/Pantalla_SubirContenido.jpeg" width="260"/>
-    </td>
-    <td>
-      <img src="https://github.com/slserna/MAEATE/blob/master/documentos/Imagenes/Pantalla_Perfil.jpeg" width="260"/>
-    </td>
-    <td>
-      <img src="https://github.com/slserna/MAEATE/blob/master/documentos/Imagenes/Pantalla_Comunidad.jpeg" width="260"/>
-    </td>
-  </tr>
 
-  <tr>
-    <th>📝 Registro</th>
-    <th></th>
-    <th></th>
-  </tr>
-  <tr>
-    <td>
-      <img src="https://github.com/slserna/MAEATE/blob/master/documentos/Imagenes/Pantalla_Registro.png" width="260"/>
-    </td>
-    <td></td>
-    <td></td>
-  </tr>
-</table>
